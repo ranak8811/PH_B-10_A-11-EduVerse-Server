@@ -32,6 +32,7 @@ async function run() {
 
     //----------------------------------------------------------------
     const serviceCollection = client.db("eduVerseDB").collection("services");
+    const bookingCollection = client.db("eduVerseDB").collection("bookings");
 
     app.post("/services", async (req, res) => {
       const newService = req.body;
@@ -57,6 +58,14 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await serviceCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.post("/bookings", async (req, res) => {
+      const newBooking = req.body;
+      console.log("Adding newly booked service to db: ", newBooking);
+
+      const result = await bookingCollection.insertOne(newBooking);
       res.send(result);
     });
 
