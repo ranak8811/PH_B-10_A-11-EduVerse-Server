@@ -103,6 +103,16 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/bookedService/:email", async (req, res) => {
+      const email = req.params.email;
+      // console.log("Provider email: ", email);
+      const query = {
+        purchasedUserEmail: email,
+      };
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
+
     //----------------------------------------------------------------
   } finally {
     // Ensures that the client will close when you finish/error
