@@ -79,6 +79,30 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/service/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await serviceCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.put("/updateService/:id", async (req, res) => {
+      const id = req.params.id;
+      const service = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updatedService = {
+        $set: service,
+      };
+      console.log(updatedService);
+      const options = { upsert: true };
+      const result = await serviceCollection.updateOne(
+        query,
+        updatedService,
+        options
+      );
+      res.send(result);
+    });
+
     //----------------------------------------------------------------
   } finally {
     // Ensures that the client will close when you finish/error
