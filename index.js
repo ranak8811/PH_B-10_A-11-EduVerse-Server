@@ -69,6 +69,16 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/myAddedService/:email", async (req, res) => {
+      const email = req.params.email;
+      // console.log("Provider email: ", email);
+      const query = {
+        providerEmail: email,
+      };
+      const result = await serviceCollection.find(query).toArray();
+      res.send(result);
+    });
+
     //----------------------------------------------------------------
   } finally {
     // Ensures that the client will close when you finish/error
