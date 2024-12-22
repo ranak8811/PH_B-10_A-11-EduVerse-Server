@@ -105,11 +105,32 @@ async function run() {
 
     app.get("/bookedService/:email", async (req, res) => {
       const email = req.params.email;
-      // console.log("Provider email: ", email);
       const query = {
         purchasedUserEmail: email,
       };
       const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/service-to-do/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {
+        providerEmail: email,
+      };
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.patch("/status-update/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+
+      const filter = { _id: new ObjectId(id) };
+      const updated = {
+        $set: { serviceStatus: status },
+      };
+
+      const result = await bookingCollection.updateOne(filter, updated);
       res.send(result);
     });
 
