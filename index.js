@@ -104,7 +104,14 @@ async function run() {
     });
 
     app.get("/allServices", async (req, res) => {
-      const cursor = serviceCollection.find();
+      const { searchParams } = req.query;
+      let option = {};
+      if (searchParams) {
+        option = {
+          name: { $regex: searchParams, $options: "i" },
+        };
+      }
+      const cursor = serviceCollection.find(option);
       const result = await cursor.toArray();
       res.send(result);
     });
