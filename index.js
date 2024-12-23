@@ -2,12 +2,21 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
-const app = express();
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
+const app = express();
 const port = process.env.PORT || 4000;
 
+const corsOptions = {
+  origin: ["http://localhost:5173"],
+  credentials: true,
+  optionalSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.j5yqq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -19,6 +28,23 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const verifyToken = (req, res, next) => {
+  // console.log("its me to verify");
+  const token = req.cookies?.token;
+  // console.log(token);
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+
+  jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized access" });
+    }
+    req.user = decoded;
+  });
+  next();
+};
 
 async function run() {
   try {
@@ -33,6 +59,35 @@ async function run() {
     //----------------------------------------------------------------
     const serviceCollection = client.db("eduVerseDB").collection("services");
     const bookingCollection = client.db("eduVerseDB").collection("bookings");
+
+    // generating jwt
+    app.post("/jwt", async (req, res) => {
+      const email = req.body;
+      // token creation
+      const token = jwt.sign(email, process.env.SECRET_KEY, {
+        expiresIn: "300d",
+      });
+
+      // console.log(token);
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
+    // logout or clear cookie from browser
+    app.get("/logout", async (req, res) => {
+      res
+        .clearCookie("token", {
+          maxAge: 0,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
 
     app.post("/services", async (req, res) => {
       const newService = req.body;
@@ -69,9 +124,17 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/myAddedService/:email", async (req, res) => {
+    app.get("/myAddedService/:email", verifyToken, async (req, res) => {
+      const decodedEmail = req?.user?.email;
       const email = req.params.email;
-      // console.log("Provider email: ", email);
+
+      // console.log("Email from token: ", decodedEmail); //aita main user
+      // console.log("Email from params: ", email); // aikhane kew jdi mail change kore entry neyer try kore tahole different email show korbe
+
+      if (decodedEmail !== email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+
       const query = {
         providerEmail: email,
       };
