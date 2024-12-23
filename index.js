@@ -89,7 +89,7 @@ async function run() {
         .send({ success: true });
     });
 
-    app.post("/services", async (req, res) => {
+    app.post("/services", verifyToken, async (req, res) => {
       const newService = req.body;
       console.log("Adding new service to db: ", newService);
 
@@ -128,12 +128,11 @@ async function run() {
       const decodedEmail = req?.user?.email;
       const email = req.params.email;
 
-      // console.log("Email from token: ", decodedEmail); //aita main user
-      // console.log("Email from params: ", email); // aikhane kew jdi mail change kore entry neyer try kore tahole different email show korbe
-
       if (decodedEmail !== email) {
         return res.status(403).send({ message: "Forbidden access" });
       }
+      // console.log("Email from token: ", decodedEmail); //aita main user
+      // console.log("Email from params: ", email); // aikhane kew jdi mail change kore entry neyer try kore tahole different email show korbe
 
       const query = {
         providerEmail: email,
@@ -149,7 +148,7 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/updateService/:id", async (req, res) => {
+    app.put("/updateService/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const service = req.body;
       const query = { _id: new ObjectId(id) };
@@ -166,8 +165,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookedService/:email", async (req, res) => {
+    app.get("/bookedService/:email", verifyToken, async (req, res) => {
+      // const email = req.params.email;
+      const decodedEmail = req?.user?.email;
       const email = req.params.email;
+
+      if (decodedEmail !== email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
       const query = {
         purchasedUserEmail: email,
       };
@@ -175,8 +180,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/service-to-do/:email", async (req, res) => {
+    app.get("/service-to-do/:email", verifyToken, async (req, res) => {
+      // const email = req.params.email;
+      const decodedEmail = req?.user?.email;
       const email = req.params.email;
+
+      if (decodedEmail !== email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
       const query = {
         providerEmail: email,
       };
@@ -184,7 +195,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/status-update/:id", async (req, res) => {
+    app.patch("/status-update/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const { status } = req.body;
 
