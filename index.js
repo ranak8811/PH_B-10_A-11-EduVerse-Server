@@ -104,16 +104,28 @@ async function run() {
     });
 
     app.get("/allServices", async (req, res) => {
-      const { searchParams } = req.query;
+      const { searchParams, page, size } = req.query;
+      const pageNumber = parseInt(page);
+      const sizeNumber = parseInt(size);
+      // console.log("Pagination: ", pageNumber, sizeNumber);
       let option = {};
       if (searchParams) {
         option = {
           name: { $regex: searchParams, $options: "i" },
         };
       }
-      const cursor = serviceCollection.find(option);
+      const cursor = serviceCollection
+        .find(option)
+        .skip(pageNumber * sizeNumber)
+        .limit(sizeNumber);
       const result = await cursor.toArray();
       res.send(result);
+    });
+
+    // for pagination
+    app.get("/servicesCount", async (req, res) => {
+      const count = await serviceCollection.estimatedDocumentCount();
+      res.send({ count });
     });
 
     app.get("/allServices/:id", verifyToken, async (req, res) => {
@@ -123,7 +135,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings", verifyToken, async (req, res) => {
       const newBooking = req.body;
       console.log("Adding newly booked service to db: ", newBooking);
 
@@ -148,7 +160,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/service/:id", async (req, res) => {
+    app.delete("/service/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await serviceCollection.deleteOne(query);
