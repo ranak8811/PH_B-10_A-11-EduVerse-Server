@@ -59,6 +59,9 @@ async function run() {
     //----------------------------------------------------------------
     const serviceCollection = client.db("eduVerseDB").collection("services");
     const bookingCollection = client.db("eduVerseDB").collection("bookings");
+    const instructorsCollection = client
+      .db("eduVerseDB")
+      .collection("instructors");
 
     // generating jwt
     app.post("/jwt", async (req, res) => {
@@ -224,6 +227,11 @@ async function run() {
       };
 
       const result = await bookingCollection.updateOne(filter, updated);
+      res.send(result);
+    });
+
+    app.get("/instructors", async (req, res) => {
+      const result = await instructorsCollection.find().toArray();
       res.send(result);
     });
 
