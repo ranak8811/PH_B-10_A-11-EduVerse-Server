@@ -9,7 +9,11 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: [
+    "http://localhost:5173",
+    "https://eduverse-ph-a-11.web.app",
+    "https://eduverse-ph-a-11.firebaseapp.com",
+  ],
   credentials: true,
   optionalSuccessStatus: 200,
 };
@@ -62,6 +66,7 @@ async function run() {
     const instructorsCollection = client
       .db("eduVerseDB")
       .collection("instructors");
+    const userCollection = client.db("eduVerseDB").collection("users");
 
     // generating jwt
     app.post("/jwt", async (req, res) => {
@@ -234,6 +239,49 @@ async function run() {
       const result = await instructorsCollection.find().toArray();
       res.send(result);
     });
+
+    //---------------------------- Users related apis start
+
+    app.post("/users", async (req, res) => {
+      const newUser = req.body;
+      // console.log("Adding new user to db: ", newUser);
+
+      const result = await userCollection.insertOne(newUser);
+      res.send(result);
+    });
+
+    app.put("/users", async (req, res) => {
+      const newUser = req.body;
+      const email = newUser.email;
+
+      console.log("Checking for existing user with email: ", email);
+
+      const filter = { email };
+      const updateData = {
+        name: newUser.name,
+        createdAt: newUser.createdAt,
+      };
+      const options = { upsert: true };
+
+      const result = await userCollection.updateOne(
+        filter,
+        { $set: updateData },
+        options
+      );
+
+      if (result.upsertedCount > 0) {
+        // console.log("New user created in the database.");
+        res.send({ message: "New user created.", result });
+      } else if (result.modifiedCount > 0) {
+        // console.log("Existing user updated in the database.");
+        res.send({ message: "Existing user updated.", result });
+      } else {
+        // console.log("No changes were made to the user.");
+        res.send({ message: "No changes were made to the user.", result });
+      }
+    });
+
+    //---------------------------- Users related apis end
 
     //----------------------------------------------------------------
   } finally {
