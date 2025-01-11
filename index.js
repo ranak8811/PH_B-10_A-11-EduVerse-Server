@@ -106,7 +106,7 @@ async function run() {
     });
 
     app.get("/popularServices", async (req, res) => {
-      const cursor = serviceCollection.find().limit(4);
+      const cursor = serviceCollection.find().limit(6);
       const result = await cursor.toArray();
       res.send(result);
     });
